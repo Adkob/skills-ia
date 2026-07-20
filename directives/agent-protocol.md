@@ -1,681 +1,498 @@
-# Agent Protocol — Construction de Projets Numériques
-> Version 1.0 · Compatible Antigravity (Gemini) & Claude Code
-> Mobilise les skills disponibles dans `~/.gemini/config/skills/`
-> Placer dans `directives/agent-protocol.md` ou copier tel quel dans un prompt
+# AGENT-PROTOCOL.md
+### Protocole POSER — Pilotage économe en tokens · Antigravity / Claude Code
+
+> **À placer à la racine de chaque projet** (aux côtés de `CLAUDE.md` / `AGENTS.md`).
+> Ce fichier est le **chef d'orchestre**. Il indique à l'agent QUAND lire quoi,
+> QUELLES compétences mobiliser à chaque phase, et COMMENT ne pas relire deux fois la même chose.
+> Il ne remplace pas les skills eux-mêmes : il leur sert de **routeur**.
+>
+> **Dossier de skills système** : `~/.gemini/config/skills/` (93 compétences disponibles)
 
 ---
 
-## Comment utiliser ce document
+## 0. Règles globales d'économie de tokens (à respecter à CHAQUE phase)
 
-Ce fichier contient des **prompts prêts à l'emploi** organisés par :
-1. **Phase** (6 étapes du cycle de vie projet)
-2. **Type de projet** (8 catégories)
-
-**Règle d'or** : Copie-colle le prompt de la phase, adapte les `[VARIABLES]`, envoie.
-L'agent activera automatiquement les skills appropriés.
-
-**Économie de tokens** : Chaque prompt = une seule session par phase.
-L'agent travaille, tu valides, tu passes à la phase suivante.
+1. **Scanner avant d'agir** : au début de chaque phase, l'agent liste le dossier de skills disponibles (`ls ~/.gemini/config/skills/`) et ne lit **que** les `SKILL.md` dont la description correspond à la phase en cours. Ne jamais relire un skill déjà chargé dans la session.
+2. **Une seule source de vérité** : les décisions validées (stack, palette, architecture) sont écrites dans `/docs/decisions.md` au fur et à mesure. L'agent lit ce fichier plutôt que de redemander le contexte à l'utilisateur.
+3. **Pas de sur-planification** : la profondeur du plan doit être proportionnelle à la taille du projet (une landing page ne nécessite pas un ADR de 10 pages).
+4. **Livrables incrémentaux** : chaque phase produit un fichier court et daté dans `/docs/` plutôt qu'un pavé unique en fin de projet.
+5. **Confirmation avant exécution lourde** : avant `build`, `deploy`, ou toute action irréversible, l'agent résume en 5 lignes ce qu'il va faire et attend un feu vert.
+6. **Skills manquants** : si un skill listé n'existe pas dans `~/.gemini/config/skills/`, le signaler à l'utilisateur au lieu d'improviser silencieusement.
 
 ---
 
-## PHASE 0 — Initialisation du Projet
+## 1. Référentiel des Skills Disponibles par Famille
 
-> Envoyer en **premier message** de chaque nouveau projet.
+> L'agent consulte ce référentiel pour identifier rapidement les skills à mobiliser.
+> Chemin absolu : `~/.gemini/config/skills/<nom-du-skill>/SKILL.md`
 
-```
-Je démarre un nouveau projet : [NOM DU PROJET]
-Type : [landing page / dashboard / SaaS / jeu / fullstack app / boutique / automatisation / site web]
-Contexte : [2-3 phrases décrivant le problème ou l'opportunité]
-Cible : [utilisateurs finaux]
-Stack technique souhaitée (si connue) : [ou "au choix"]
-Contraintes : [délai, budget, intégrations obligatoires, ou "aucune"]
+### 🧠 Stratégie & Workflow
+| Skill | Usage |
+|-------|-------|
+| `brainstorming` | Exploration de besoins avant toute implémentation |
+| `planification` | Plans d'implémentation multi-étapes avec TDD |
+| `skill-creator` | Créer ou améliorer des compétences |
+| `skill-repair` | Réparer des skills cassés |
+| `accidental-data-loss-prevention` | Confirmation avant toute opération destructive |
 
-Utilise le protocole d'architecture à 3 couches (directives → orchestration → exécution).
-Commence par activer la compétence `brainstorming` pour explorer les besoins avant toute implémentation.
-```
+### 🎨 Design & UI/UX
+| Skill | Usage |
+|-------|-------|
+| `stitch` | Génération de maquettes UI via Stitch MCP (screens, design system) |
+| `ui-ux-pro-max` | Recommandations UX, patterns, palettes, typographies (84 styles) |
+| `design` | Identité visuelle complète (logo, CIP, mockups) |
+| `design-system` | Tokens de design (couleurs, typo, espacement, composants) |
+| `frontend-design` | Direction visuelle intentionnelle pour le frontend |
+| `brand` | Identité de marque, brand voice, messaging |
+| `brand-guidelines` | Application de la charte graphique Anthropic |
+| `canvas-design` | Visuels statiques (posters, hero images, affiches) |
+| `banner-design` | Bannières réseaux sociaux et publicités |
+| `theme-factory` | Application rapide d'un thème cohérent |
+| `ui-styling` | Composants shadcn/ui + Tailwind |
+| `algorithmic-art` | Art génératif p5.js, flow fields, animations |
 
----
+### 💻 Développement Web & Frontend
+| Skill | Usage |
+|-------|-------|
+| `modern-web-guidance` | Bonnes pratiques web modernes (HTML/CSS/JS, APIs) |
+| `web-artifacts-builder` | Artefacts React complexes (shadcn/ui, routing, state) |
+| `frontend-design` | Design frontend distinctif et intentionnel |
+| `chrome-extensions` | Extensions Chrome Manifest V3 |
+| `mcp-builder` | Création de serveurs MCP |
+| `claude-api` | Intégration API Anthropic/Claude (streaming, tools, agents) |
+| `google-antigravity-sdk` | Agents multi-agents avec le SDK Antigravity |
+| `android-cli` | Développement Android CLI |
 
-## PHASE 1 — Brainstorming & Exploration
+### 🧪 Tests & Débogage
+| Skill | Usage |
+|-------|-------|
+| `webapp-testing` | Tests fonctionnels via Playwright (UI, formulaires, navigation) |
+| `a11y-debugging` | Audit accessibilité (ARIA, contraste, clavier, tap targets) |
+| `debug-optimize-lcp` | Optimisation Core Web Vitals (LCP, CLS, INP) |
+| `memory-leak-debugging` | Détection fuites mémoire JS/Node.js |
+| `chrome-devtools` | Débogage et automation navigateur via DevTools MCP |
+| `troubleshooting` | Dépannage connexion DevTools |
 
-> **Skills** : `brainstorming`, `ui-ux-pro-max`, `stitch`
-> **Objectif** : Comprendre, explorer, aligner — AUCUN code à cette étape.
+### 📄 Documents & Présentations
+| Skill | Usage |
+|-------|-------|
+| `slides` | Présentations HTML avec Chart.js |
+| `doc-coauthoring` | Co-rédaction de documentation structurée |
+| `docx` | Fichiers Word .docx |
+| `pdf` | Manipulation et création de PDFs |
+| `pptx` | Présentations PowerPoint .pptx |
+| `xlsx` | Tableurs Excel .xlsx |
+| `internal-comms` | Communications internes (rapports, newsletters) |
 
-### 1A · Brainstorming Général
+### 🎬 Médias & Créatif
+| Skill | Usage |
+|-------|-------|
+| `remotion-best-practices` | Vidéos animées React (Remotion) |
+| `slack-gif-creator` | GIFs animés optimisés Slack |
 
-```
-[SKILL: brainstorming]
+### ☁️ Google Cloud Platform & Data
+| Skill | Usage |
+|-------|-------|
+| `bigquery` | Requêtes SQL BigQuery, optimisation, ML |
+| `building-data-apps` | Dashboards data (React + Recharts ou Streamlit) |
+| `data-autocleaning` | Nettoyage automatique de données |
+| `dataform-bigquery` | Pipelines ELT Dataform |
+| `dbt-bigquery` | Pipelines dbt pour BigQuery |
+| `firestore-data` | Opérations CRUD Firestore NoSQL |
+| `gcp-data-pipelines` | Orchestration de pipelines data GCP |
+| `gcp-dataflow` | Pipelines Apache Beam / Dataflow |
+| `gcp-pipeline-orchestration` | Orchestration Cloud Composer |
+| `gcp-spark` | Spark sur Dataproc |
+| `ml-best-practices` | Machine learning (classification, régression, clustering) |
+| `notebook-guidance` | Notebooks Jupyter + BigQuery magics |
+| `discovering-gcp-data-assets` | Exploration de datasets GCP |
+| `managing-python-dependencies` | Gestion venv, pip, uv — scripts Python |
+| `gcloud-auth-verification` | Authentification Google Cloud ADC |
+| `gcs-security-assessment` | Audit sécurité GCS |
 
-Projet : [NOM]
-Type : [TYPE]
-
-Explore avec moi les besoins réels de ce projet.
-Pose-moi des questions une par une pour comprendre :
-1. Le problème core à résoudre
-2. Les utilisateurs (personas, douleurs, attentes)
-3. Les fonctionnalités essentielles vs nice-to-have
-4. Les contraintes techniques et business
-5. Les métriques de succès (comment saurons-nous que c'est réussi ?)
-
-Ne commence pas à coder ou planifier. Explore d'abord.
-```
-
-### 1B · Exploration UI/UX
-
-```
-[SKILL: ui-ux-pro-max]
-
-Contexte : [RÉSUMÉ DU PROJET EN 2 PHRASES]
-
-Recommande-moi :
-- 3 styles visuels possibles (palette, typographie, mood board verbal)
-- Les patterns UX clés pour ce type de produit
-- Les 5 écrans / vues essentiels à concevoir en priorité
-- Les risques UX à anticiper
-
-Format : tableaux comparatifs + liste priorisée.
-```
-
-### 1C · Génération Maquettes Stitch
-
-```
-[SKILL: stitch]
-
-Crée un projet Stitch pour : [NOM DU PROJET]
-Design system : couleur principale [HEX], style [moderne/minimaliste/bold/glassmorphism], mode [LIGHT/DARK]
-Police : [Inter / Manrope / Space Grotesk / au choix]
-Device : [DESKTOP / MOBILE / les deux]
-
-Génère les écrans suivants :
-1. [Nom écran 1] — [description en 1 phrase]
-2. [Nom écran 2] — [description en 1 phrase]
-3. [Nom écran 3] — [description en 1 phrase]
-
-Pour chaque écran : style cohérent, sections [liste des sections clés].
-Génère 3 variantes de l'écran principal (creativeRange: EXPLORE).
-```
-
----
-
-## PHASE 2 — Planification & Architecture
-
-> **Skills** : `planification`, `doc-coauthoring`, `slides`, `docx`
-> **Objectif** : Plan d'implémentation + document d'architecture.
-
-### 2A · Plan d'Implémentation
-
-```
-[SKILL: planification]
-
-Projet : [NOM]
-Objectif : [UNE PHRASE]
-
-Architecture envisagée :
-- Frontend : [React/Next.js/Vite/HTML vanilla/autre]
-- Backend : [Node.js/Python/Firebase/Supabase/serverless/aucun]
-- Base de données : [PostgreSQL/SQLite/Firestore/aucune]
-- Déploiement : [Vercel/Netlify/GCP/local]
-
-Fonctionnalités à implémenter :
-1. [Feature 1]
-2. [Feature 2]
-3. [Feature 3]
-
-Génère un plan d'implémentation complet avec :
-- Structure des fichiers
-- Tâches bite-sized avec tests TDD
-- Ordre de développement (dépendances d'abord)
-- Commandes exactes à chaque étape
-
-Sauvegarde dans docs/plan/[NOM]-[DATE].md
-```
-
-### 2B · Document d'Architecture
-
-```
-[SKILL: doc-coauthoring]
-
-Rédige le document d'architecture technique pour : [NOM DU PROJET]
-
-Sections requises :
-1. Vue d'ensemble et objectifs
-2. Diagramme d'architecture (Mermaid)
-3. Stack technique justifiée
-4. Structure des répertoires
-5. Modèle de données (entités principales)
-6. API et flux de données
-7. Stratégie de sécurité
-8. Plan de déploiement
-9. Risques techniques et mitigations
-
-Contexte : [RÉSUMÉ TECHNIQUE EN 3 PHRASES]
-Stack : [STACK CHOISIE]
-
-Format : Markdown, à committer dans docs/architecture.md
-```
-
-### 2C · Présentation du Plan (stakeholders)
-
-```
-[SKILL: slides]
-
-Crée une présentation de 8 slides pour valider le plan du projet [NOM].
-
-Slides :
-1. Titre + tagline
-2. Problème résolu
-3. Solution proposée + capture maquette
-4. Architecture technique (schéma simplifié)
-5. Roadmap / phases de développement
-6. Stack technique + justification
-7. Métriques de succès
-8. Prochaines étapes
-
-Style : moderne, professionnel, dark mode, accent [COULEUR].
-```
+### 🛢️ Bases de Données (AlloyDB & Cloud SQL)
+`alloydb-omni-*` (9 skills) · `alloydb-postgres-*` (7 skills) · `cloud-sql-mysql-*` (4) · `cloud-sql-postgres-*` (8) · `cloud-sql-sqlserver-*` (4) · `spanner-data`
 
 ---
 
-## PHASE 3 — Design & Identité Visuelle
+## 2. Le Router de Projet
 
-> **Skills** : `design`, `design-system`, `frontend-design`, `brand`, `theme-factory`, `canvas-design`, `banner-design`, `stitch`
-> **Objectif** : Produire tous les assets visuels avant de coder.
+L'agent commence **toujours** par déterminer `{{TYPE_PROJET}}` puis consulte la ligne correspondante.
 
-### 3A · Design System Complet
-
-```
-[SKILL: design-system]
-
-Crée le design system complet pour [NOM DU PROJET].
-
-Identité : [description du produit en 1 phrase]
-Valeurs : [ex: moderne, fiable, accessible, fun]
-Cible : [description des utilisateurs]
-
-Génère :
-1. Palette de couleurs (primary, secondary, accent, neutral, semantic)
-2. Typographie (titres, corps, code, labels) avec tailles et poids
-3. Système d'espacement (base 4px)
-4. Tokens de bordure, ombre, border-radius
-5. Variables CSS/Tailwind correspondantes
-6. Exemples : bouton, carte, formulaire, badge
-
-Format : fichier CSS variables + documentation Markdown.
-```
-
-### 3B · Identité de Marque
-
-```
-[SKILL: brand]
-
-Développe l'identité de marque pour [NOM DU PROJET].
-
-Description : [ce que fait le produit]
-Ton : [professionnel / décontracté / technique / ludique / premium]
-Secteur : [SaaS / e-commerce / créatif / data / outil dev]
-
-Produis :
-1. Brand voice guide (ton, langage, ce qu'on dit / ne dit pas)
-2. Tagline principale + 3 alternatives
-3. Messages clés par persona
-4. Palette émotionnelle et visuels suggérés
-5. Copy pour : hero section, CTA, email d'onboarding
-```
-
-### 3C · Thème Visuel Rapide
-
-```
-[SKILL: theme-factory]
-
-Applique un thème visuel cohérent pour [NOM DU PROJET].
-
-Style : [moderne sombre / minimaliste blanc / coloré vibrant / glassmorphism / néon tech / corporate bleu]
-Secteur : [TYPE DE PROJET]
-
-Génère le thème complet : couleurs, typographie, composants styled.
-```
-
-### 3D · Assets Visuels
-
-```
-[SKILL: canvas-design]
-
-Crée les visuels pour [NOM DU PROJET] :
-1. Hero image (1920x1080) — [description du sujet]
-2. Image Open Graph (1200x630) — [description]
-3. Favicon et icône app (512x512) — [style, icône]
-Style : [STYLE DU PROJET], palette [COULEURS PRINCIPALES].
-
-[SKILL: banner-design]
-Bannières réseaux sociaux :
-- LinkedIn (1200x627) — [message clé]
-- Twitter/X (1500x500) — [message]
-```
+| Type de projet | Skills Phase 1 (Brainstorm) | Skills Phase 3 (Design) | Skills Phase 4 (Dev) | Skills Phase 5 (Tests) | Complexité archi. |
+|---|---|---|---|---|---|
+| **Automatisation tâche/processus** | `brainstorming` `planification` | _(aucun)_ | `managing-python-dependencies` `accidental-data-loss-prevention` | _(tests manuels)_ | Faible — pipeline linéaire |
+| **SaaS** | `brainstorming` `planification` `ui-ux-pro-max` | `stitch` `design-system` `brand` `frontend-design` | `modern-web-guidance` `web-artifacts-builder` `claude-api` | `webapp-testing` `a11y-debugging` `debug-optimize-lcp` | Élevée — multi-services |
+| **Landing page** | `brainstorming` `ui-ux-pro-max` | `stitch` `frontend-design` `brand` `canvas-design` `banner-design` | `modern-web-guidance` | `a11y-debugging` `debug-optimize-lcp` | Très faible |
+| **Dashboard / Data** | `brainstorming` `planification` | `stitch` `ui-ux-pro-max` `design-system` | `building-data-apps` `modern-web-guidance` | `webapp-testing` `debug-optimize-lcp` | Moyenne |
+| **Jeu navigateur** | `brainstorming` `planification` | `frontend-design` `algorithmic-art` `canvas-design` | `modern-web-guidance` `web-artifacts-builder` | `webapp-testing` `chrome-devtools` | Moyenne |
+| **Design → Code (image uploadée)** | `brainstorming` `ui-ux-pro-max` | `stitch` `frontend-design` `design-system` | `modern-web-guidance` `web-artifacts-builder` | `a11y-debugging` `debug-optimize-lcp` | Faible à moyenne |
+| **Application fullstack** | `brainstorming` `planification` `ui-ux-pro-max` | `stitch` `design-system` `brand` `frontend-design` | `modern-web-guidance` `web-artifacts-builder` `claude-api` `managing-python-dependencies` | `webapp-testing` `a11y-debugging` `debug-optimize-lcp` `memory-leak-debugging` | Élevée |
+| **Boutique en ligne** | `brainstorming` `planification` `ui-ux-pro-max` | `stitch` `design-system` `brand` `frontend-design` `canvas-design` | `modern-web-guidance` `web-artifacts-builder` | `webapp-testing` `a11y-debugging` `debug-optimize-lcp` | Moyenne à élevée |
+| **Site web (vitrine)** | `brainstorming` `ui-ux-pro-max` | `stitch` `frontend-design` `brand` `canvas-design` | `modern-web-guidance` | `a11y-debugging` `debug-optimize-lcp` | Faible à moyenne |
+| **Vidéo / Motion** | `brainstorming` | `design-system` `canvas-design` | `remotion-best-practices` | _(validation manuelle)_ | Faible |
+| **Agent IA / MCP** | `brainstorming` `planification` | _(aucun)_ | `claude-api` `mcp-builder` `google-antigravity-sdk` `managing-python-dependencies` | `webapp-testing` | Élevée |
+| **Data Pipeline GCP** | `brainstorming` `planification` | _(aucun)_ | `gcp-data-pipelines` `managing-python-dependencies` `bigquery` | `gcp-pipeline-orchestration` | Élevée |
 
 ---
 
-## PHASE 4 — Développement & Construction
+## 3. Phase 1 — Brainstorming & Cadrage
 
-> **Skills** : `modern-web-guidance`, `frontend-design`, `web-artifacts-builder`, `mcp-builder`, `managing-python-dependencies`, `chrome-extensions`, `claude-api`
-> **Objectif** : Construire le produit, fichier par fichier, en TDD.
+**But** : transformer une idée floue en un brief exploitable, sans coder.
 
-### 4A · Démarrage Projet Web
-
-```
-[SKILL: modern-web-guidance]
-[SKILL: frontend-design]
-
-Initialise le projet [NOM] avec :
-- Framework : [Next.js 14 App Router / Vite + React / HTML+CSS+JS vanilla]
-- Styling : [CSS Modules / Tailwind v3 / Vanilla CSS]
-- Auth : [NextAuth / Supabase Auth / aucune]
-- DB : [Prisma + PostgreSQL / Supabase / Firebase / aucune]
-
-Structure de fichiers :
-[COLLER ICI LA STRUCTURE DU PLAN D'ARCHITECTURE]
-
-Commence par :
-1. Initialiser le projet (commandes exactes)
-2. Configurer le design system (variables CSS ou Tailwind config)
-3. Créer les composants de base (Layout, Header, Footer, Button, Card)
-4. Implémenter la page d'accueil
-
-Respecte : sémantique HTML5, accessibilité ARIA, responsive mobile-first.
-```
-
-### 4B · Feature par Feature
+**Skills à mobiliser** : `brainstorming` · `ui-ux-pro-max` (si projet UI) · `planification` (pour pré-cadrer la portée)
 
 ```
-Implémente la feature : [NOM DE LA FEATURE]
+[PERSONA]
+Agis en tant que consultant produit senior, à la fois créatif et pragmatique,
+habitué à cadrer des projets {{TYPE_PROJET}} pour des porteurs de projet non-techniques.
 
-Contexte du projet : [NOM] — [STACK]
-Fichiers concernés :
-- Créer : [liste des nouveaux fichiers]
-- Modifier : [liste des fichiers existants]
+[OBJECTIF]
+Aide-moi à clarifier l'idée suivante : {{DESCRIPTION_IDEE}}.
+Le but final est de produire un brief clair qui servira de base au plan de construction,
+afin d'éviter les allers-retours coûteux en tokens plus tard dans le projet.
 
-Comportement attendu :
-[DESCRIPTION PRÉCISE]
+[SITUATION]
+- Type de projet : {{TYPE_PROJET}}
+- Public cible : {{PUBLIC_CIBLE}}
+- Contraintes connues : {{CONTRAINTES}} (budget de temps, stack imposée, délai…)
+- Ressources déjà disponibles : {{FICHIERS_OU_LIENS}}
 
-Contraintes :
-- Tests unitaires requis avant l'implémentation (TDD)
-- Commandes de test : [ex: npm test]
-- Commit après chaque sous-tâche validée
+[SKILLS À ACTIVER]
+1. Commence par lire `~/.gemini/config/skills/brainstorming/SKILL.md`
+2. Si le projet a une composante UI : lis aussi `~/.gemini/config/skills/ui-ux-pro-max/SKILL.md`
+   pour proposer 2-3 directions visuelles après le cadrage fonctionnel.
 
-Commence par écrire le test qui échoue, puis implémente.
+[EXCLUSIONS]
+Ne commence PAS à écrire de code ni à choisir une stack technique à ce stade.
+Reste au niveau du besoin, des fonctionnalités et de l'expérience utilisateur.
+N'invente pas de contraintes non données ; liste-les comme hypothèses à valider.
+
+[BONUS — ITÉRATION]
+Avant de produire le brief final, pose-moi 5 questions maximum pour combler les zones
+d'ombre (fonctionnalités indispensables vs. secondaires, ton/style, échéance, budget technique).
 ```
 
-### 4C · API & Backend
-
-```
-Implémente les endpoints API pour [NOM DU PROJET] :
-
-[SKILL: managing-python-dependencies] (si backend Python)
-
-Endpoint 1 : [METHOD] [/path]
-- Input : [schema]
-- Output : [schema]
-- Logique : [description]
-- Erreurs : [liste]
-
-Endpoint 2 : [METHOD] [/path]
-[...]
-
-Génère aussi :
-- Schéma de validation (Zod / Pydantic / Joi)
-- Tests d'intégration
-- Documentation OpenAPI inline
-
-[SKILL: accidental-data-loss-prevention]
-Avant tout DELETE ou opération destructive, demander confirmation.
-```
-
-### 4D · Intégration IA (Claude/Gemini)
-
-```
-[SKILL: claude-api]
-
-Intègre l'IA dans [NOM DU PROJET] pour : [DESCRIPTION DE LA FONCTIONNALITÉ]
-
-Modèle : [claude-sonnet-4-5 / gemini-2.0-flash / au choix]
-Type d'appel : [streaming / one-shot / multi-turn]
-Rôle système : [description du rôle de l'IA]
-
-Implémente :
-1. Client API avec gestion des erreurs et retry
-2. Gestion du streaming si applicable
-3. Prompt engineering optimisé
-4. Composant UI d'affichage de la réponse
-5. Tests avec mocks de l'API
-```
-
-### 4E · Scripts d'Automatisation
-
-```
-[SKILL: managing-python-dependencies]
-
-Crée le script : execution/[nom-script].py
-Tâche : [DESCRIPTION DE CE QUE LE SCRIPT DOIT FAIRE]
-
-Ce script doit :
-1. [Action 1]
-2. [Action 2]
-3. [Action 3]
-
-Inputs : [paramètres / variables d'env depuis .env]
-Outputs : [format de sortie, fichiers produits]
-
-Structure :
-- Commentaires en-tête (purpose, usage, dependencies)
-- Argparse pour les paramètres CLI
-- Logging DEBUG/INFO/ERROR
-- Mode --dry-run
-
-Génère aussi directives/[nom-script].md (quoi/comment/cas limites).
-Exécute et montre la sortie.
-```
+**Sortie attendue** : `/docs/01-brief.md` (1 page max).
 
 ---
 
-## PHASE 5 — Tests, Audit & Déploiement
+## 4. Phase 2 — Plan de Construction
 
-> **Skills** : `webapp-testing`, `a11y-debugging`, `debug-optimize-lcp`, `memory-leak-debugging`, `chrome-devtools`
-> **Objectif** : Valider la qualité avant mise en production.
+**But** : découper le brief en tâches ordonnées, avec jalons vérifiables.
 
-### 5A · Tests Fonctionnels
-
-```
-[SKILL: webapp-testing]
-
-Teste [NOM] sur [URL ou localhost:PORT].
-
-Scénarios à valider :
-1. [Scénario 1 — ex: inscription utilisateur]
-   - Actions : [séquence]
-   - Résultat attendu : [comportement]
-2. [Scénario 2]
-3. [Scénario 3]
-
-Pour chaque scénario :
-- Screenshot avant/après actions clés
-- Vérifier messages d'erreur et états de chargement
-- Tester mobile (375px) et desktop (1440px)
-- Reporter bugs : description, étapes, screenshot
-```
-
-### 5B · Audit Accessibilité
+**Skills à mobiliser** : `planification` · `doc-coauthoring` · `slides` (si présentation stakeholders)
 
 ```
-[SKILL: a11y-debugging]
+[PERSONA]
+Agis en tant que chef de projet technique rigoureux, spécialisé dans les livraisons
+itératives de projets {{TYPE_PROJET}}.
 
-Audite l'accessibilité de [URL].
+[OBJECTIF]
+À partir de /docs/01-brief.md, produis un plan de construction en jalons (milestones),
+afin de valider l'avancement étape par étape et éviter un développement monolithique
+qui gaspillerait des tokens en cas d'erreur tardive.
 
-Vérifie :
-1. Structure sémantique HTML (headings, landmarks)
-2. Labels ARIA sur éléments interactifs
-3. Navigation clavier (Tab, Enter, Escape)
-4. Contrastes de couleur (WCAG AA minimum)
-5. Zones de tap mobile (44px minimum)
-6. Messages d'erreur de formulaires accessibles
+[SITUATION]
+Consulte d'abord /docs/decisions.md s'il existe.
+Consulte la colonne Skills du Router de Projet (section 2) pour {{TYPE_PROJET}}.
 
-Produis : rapport avec score, issues par sévérité, corrections recommandées.
+[SKILLS À ACTIVER]
+1. Lis `~/.gemini/config/skills/planification/SKILL.md` — applique son format de plan TDD.
+2. Pour chaque jalon, indique explicitement : skill mobilisé · commande de test · critère de "terminé".
+
+[EXCLUSIONS]
+Ne détaille pas le code ligne par ligne à ce stade. Découpe en tâches atomiques
+(1 tâche = 1 commit testable), avec critère de "terminé" explicite.
+Ne planifie pas plus de granularité que nécessaire pour ce type de projet.
+
+[FORMAT ATTENDU]
+Pour chaque jalon :
+- Objectif
+- Tâches (liste à puces)
+- Skill mobilisé (`nom-du-skill`)
+- Critère de validation (commande ou vérification manuelle)
+
+[BONUS — ITÉRATION]
+Propose le plan, puis demande validation ou ajustement avant de continuer.
 ```
 
-### 5C · Optimisation Performance
-
-```
-[SKILL: debug-optimize-lcp]
-
-Analyse et optimise les performances de [URL].
-
-Cibles : LCP < 2.5s · CLS < 0.1 · INP < 200ms
-
-Vérifie :
-1. Ressources bloquantes (CSS/JS critique)
-2. Images (format, taille, lazy loading, priority)
-3. Fonts (FOUT, preload)
-4. Render-blocking scripts
-5. Cache et CDN
-
-Produis : métriques actuelles, causes, actions correctives priorisées.
-```
-
-### 5D · Déploiement
-
-```
-Déploie [NOM] sur [Vercel / Netlify / GCP / VPS].
-
-Prérequis :
-- Build command : [npm run build ou autre]
-- Output directory : [dist / .next / build]
-- Variables d'env : [liste des clés sans valeurs]
-- Domain : [domaine ou "auto-généré"]
-
-Génère :
-1. Commande de déploiement complète
-2. Config provider (vercel.json / netlify.toml / dockerfile)
-3. Fichier .env.example documenté
-4. Checklist de validation post-déploiement
-```
+**Sortie attendue** : `/docs/02-plan.md`.
 
 ---
 
-## PROMPTS PAR TYPE DE PROJET
+## 5. Phase 3 — Document d'Architecture
 
-### 🚀 SaaS Application
+**But** : figer les choix techniques structurants (uniquement si le projet le justifie — cf. colonne "Complexité archi." du Router).
 
-```
-[SKILL: brainstorming] + [SKILL: planification] + [SKILL: stitch] + [SKILL: design-system]
-
-Je construis un SaaS : [NOM]
-Problème résolu : [DESCRIPTION]
-Modèle de revenus : [freemium / subscription / usage-based]
-Utilisateurs cibles : [PERSONAS]
-
-Phase 1 — Explorer les fonctionnalités core et le MVP minimum viable.
-Lister les features : Must Have / Should Have / Could Have.
-
-Phase 2 — Stack recommandée pour SaaS scalable (auth, billing Stripe, multi-tenancy).
-Générer la structure complète des fichiers.
-
-Phase 3 — Via Stitch : dashboard utilisateur, pricing, onboarding (3 steps), settings.
-Design system : couleur [HEX], style [STYLE].
-```
-
-### 🛍️ Boutique en Ligne (Storefront)
+**Skills à mobiliser** : `doc-coauthoring` · `managing-python-dependencies` (si back Python) · `gcloud-auth-verification` (si GCP)
 
 ```
-[SKILL: brainstorming] + [SKILL: stitch] + [SKILL: design] + [SKILL: brand]
+[PERSONA]
+Agis en tant qu'architecte logiciel senior, orienté simplicité et maintenabilité,
+qui refuse la sur-ingénierie.
 
-Je construis une boutique en ligne pour : [PRODUIT/NICHE]
-Budget client moyen : [FOURCHETTE]
-Nombre de produits : [ESTIMATION]
+[OBJECTIF]
+Rédige un document d'architecture (ADR léger) pour {{TYPE_PROJET}}, afin de figer
+la stack, les flux de données et les intégrations avant toute ligne de code.
 
-Via Stitch — générer :
-- Page d'accueil hero + featured products
-- Catalogue avec filtres
-- Page produit avec galerie
-- Panier + checkout (3 étapes)
-- Compte utilisateur
+[SITUATION]
+Base-toi sur /docs/01-brief.md et /docs/02-plan.md.
+Contraintes techniques connues : {{STACK_IMPOSEE_OU_PREFERENCES}}.
 
-Intégrations : [Stripe / Shopify / WooCommerce / custom]
-Design : [premium/accessible/coloré/minimaliste], accent [COULEUR]
-Inclure : SEO, schema.org produits, Core Web Vitals.
+[SKILLS À ACTIVER]
+- Si backend Python → `managing-python-dependencies` (conventions de dépendances)
+- Si déploiement GCP → `gcloud-auth-verification` + skills GCP correspondants
+- Si base de données → consulte le skill `cloud-sql-postgres-admin` ou `firestore-data` selon le choix
+
+[EXCLUSIONS]
+N'ajoute pas de composants non justifiés par le brief (pas de microservices pour une
+landing page, pas de base de données pour un site vitrine statique).
+Justifie chaque choix en une phrase.
+
+[FORMAT ATTENDU]
+Contexte / Stack retenue (front, back, data, hébergement) /
+Schéma des flux (texte ou mermaid) / Alternatives écartées et pourquoi.
+
+[BONUS — ITÉRATION]
+Si plusieurs stacks sont plausibles, présente-les en tableau comparatif et demande
+de trancher avant de rédiger la version finale.
 ```
 
-### 📊 Dashboard & Data App
+**Sortie attendue** : `/docs/03-architecture.md` (+ schéma Mermaid si utile).
+**Note token** : pour une landing page ou un site simple, cette phase peut être **fusionnée en 3 lignes** dans le plan.
+
+---
+
+## 6. Phase 4 — Design
+
+**But** : définir l'identité visuelle et les composants avant le développement.
+
+**Skills à mobiliser** (selon type de projet) :
+
+| Besoin | Skill à activer |
+|--------|----------------|
+| Maquettes UI écrans complets | `stitch` |
+| Palette · typo · patterns UX | `ui-ux-pro-max` |
+| Design system (tokens CSS) | `design-system` |
+| Direction visuelle frontend | `frontend-design` |
+| Identité de marque + copy | `brand` |
+| Thème rapide cohérent | `theme-factory` |
+| Visuels statiques (hero, OG) | `canvas-design` |
+| Bannières réseaux sociaux | `banner-design` |
+| Composants shadcn/Tailwind | `ui-styling` |
+| Art génératif / jeu | `algorithmic-art` |
 
 ```
-[SKILL: building-data-apps] + [SKILL: stitch] + [SKILL: ui-ux-pro-max]
+[PERSONA]
+Agis en tant que designer produit senior, avec un sens aigu de l'esthétique moderne
+et de la cohérence de design system.
 
-Je construis un dashboard pour : [OBJECTIF]
-Source de données : [API / CSV / PostgreSQL / BigQuery / Firestore]
-Utilisateurs : [PROFIL]
+[OBJECTIF]
+Propose une direction visuelle pour {{TYPE_PROJET}}, afin de guider la construction
+front-end sans avoir à retoucher le style après coup.
 
-Via Stitch — générer :
-- Overview avec 4 KPIs
-- Graphiques : [ligne / bar / pie / scatter]
-- Table de données avec tri/filtre/export
-- Filtres temporels (7j / 30j / custom)
+[SITUATION]
+- Ton/ambiance souhaité(e) : {{TON_VISUEL}} (épuré, ludique, corporate, glassmorphism…)
+- Référence visuelle fournie (si applicable) : {{IMAGE_OU_LIEN}}
 
-Stack : React + Recharts/Nivo ou Streamlit (Python)
-Données : [SCHÉMA OU DESCRIPTION]
+[SKILLS À ACTIVER — dans cet ordre]
+1. `stitch` → générer les maquettes écrans clés (desktop + mobile) via StitchMCP
+2. `ui-ux-pro-max` → valider les choix UX, patterns, et palettes de couleurs
+3. `design-system` → produire les tokens CSS (variables, espacement, typographie)
+4. `frontend-design` → direction visuelle intentionnelle (pas de "template générique")
+5. `brand` → si le projet nécessite une identité de marque complète
+6. `canvas-design` → visuels hero image, Open Graph, favicon
+7. `banner-design` → bannières LinkedIn, Twitter/X si besoin marketing
 
-Générer d'abord avec données mock, puis connecter à [SOURCE].
+[EXCLUSIONS]
+N'utilise pas de composants par défaut génériques ("template Bootstrap-like").
+Propose une palette, une typographie et une hiérarchie visuelle intentionnelles.
+
+[FORMAT ATTENDU]
+Donne 2 directions distinctes :
+- Direction A : [style] — palette · typo · exemple composant clé
+- Direction B : [style] — palette · typo · exemple composant clé
+
+[BONUS — ITÉRATION]
+Demande de choisir une direction (ou de fusionner des éléments) avant de générer
+les maquettes/composants définitifs.
 ```
 
-### 🎮 Jeu Navigateur
+**Sortie attendue** : `/docs/04-design.md` + maquettes Stitch + tokens CSS.
+
+---
+
+## 7. Phase 5 — Construction & Exécution
+
+**But** : coder, tester, livrer — en suivant strictement le plan et l'architecture validés.
+
+**Skills à mobiliser** (selon type de projet) :
+
+| Besoin | Skill à activer |
+|--------|----------------|
+| Frontend moderne (HTML/CSS/JS) | `modern-web-guidance` |
+| Composants React complexes | `web-artifacts-builder` |
+| Extension Chrome | `chrome-extensions` |
+| Intégration Claude / Gemini | `claude-api` |
+| Agent IA multi-composants | `google-antigravity-sdk` |
+| Serveur MCP custom | `mcp-builder` |
+| Scripts Python + dépendances | `managing-python-dependencies` |
+| Dashboard data | `building-data-apps` |
+| Pipeline GCP | `gcp-data-pipelines` `gcp-pipeline-orchestration` |
+| Données BigQuery | `bigquery` |
+| Base de données Cloud SQL | `cloud-sql-postgres-admin` `cloud-sql-postgres-data` |
+| Base de données Firestore | `firestore-data` |
+| Vidéo React (Remotion) | `remotion-best-practices` |
+| Opération destructive (DELETE) | `accidental-data-loss-prevention` ← **OBLIGATOIRE** |
 
 ```
-[SKILL: brainstorming] + [SKILL: modern-web-guidance] + [SKILL: algorithmic-art]
+[PERSONA]
+Agis en tant que développeur senior full-stack, discipliné, qui livre par petites
+itérations testables plutôt que par gros blocs.
 
-Je construis un jeu navigateur : [NOM — CONCEPT EN 1 PHRASE]
-Genre : [puzzle / platformer / arcade / stratégie / RPG text]
-Technologie : [Canvas API / Three.js / Phaser / HTML+CSS pur]
+[OBJECTIF]
+Implémente le jalon {{NUMERO_JALON}} du plan (/docs/02-plan.md), en respectant
+l'architecture (/docs/03-architecture.md) et le design (/docs/04-design.md),
+afin de produire un incrément fonctionnel et vérifiable.
 
-Mécaniques :
-1. [Mécanique principale]
-2. [Règles de victoire/défaite]
-3. [Progression]
+[SITUATION]
+Type de projet : {{TYPE_PROJET}}.
 
-Générer :
-- Boucle de jeu principale (game loop)
-- Moteur de rendu (selon techno)
-- Système de score + highscore (localStorage)
-- Écran titre + game over
-- Contrôles clavier + touch mobile
+[SKILLS À ACTIVER — dans cet ordre]
+1. Identifie les skills de construction dans le Router (section 2) pour {{TYPE_PROJET}}
+2. Pour chaque skill listé, vérifie qu'il existe dans `~/.gemini/config/skills/`
+3. Si skill manquant → signale-le avant de commencer, ne pas improviser
 
-Commencer par la version la plus simple jouable, itérer ensuite.
+[SÉQUENCE DE CONSTRUCTION]
+Pour chaque tâche du jalon :
+a) Écrire le test qui échoue (TDD)
+b) Implémenter le minimum pour faire passer le test
+c) Vérifier le test → commit
+d) Documenter dans /docs/05-changelog.md
+
+[EXCLUSIONS]
+Ne touche pas aux fichiers/jalons hors du périmètre de cette tâche.
+Ne réécris pas l'architecture ou le design déjà validés.
+Si un blocage impose une modification → signale-le, propose, attends validation.
+
+[AVANT TOUTE ACTION DESTRUCTIVE]
+Activer `accidental-data-loss-prevention` → résumer en 5 lignes + attendre feu vert.
+
+[BONUS — ITÉRATION]
+À la fin du jalon, fournis un résumé de 5 lignes :
+- Ce qui a été fait
+- Comment tester
+- Ce qui reste
+Avant de passer au jalon suivant.
 ```
 
-### 🌐 Landing Page
+**Sortie attendue** : code + `/docs/05-changelog.md` mis à jour à chaque jalon.
+
+---
+
+## 8. Phase 6 — Tests, Audit & Déploiement
+
+**But** : valider la qualité, corriger, déployer.
+
+**Skills à mobiliser** :
+
+| Besoin | Skill à activer |
+|--------|----------------|
+| Tests fonctionnels (Playwright) | `webapp-testing` |
+| Audit accessibilité (WCAG) | `a11y-debugging` |
+| Optimisation Core Web Vitals | `debug-optimize-lcp` |
+| Fuites mémoire JS | `memory-leak-debugging` |
+| Débogage navigateur DevTools | `chrome-devtools` |
+| Dépannage connexion | `troubleshooting` |
 
 ```
-[SKILL: stitch] + [SKILL: frontend-design] + [SKILL: brand] + [SKILL: modern-web-guidance]
+[PERSONA]
+Agis en tant qu'ingénieur QA senior et expert performance web.
 
-Landing page pour : [PRODUIT/SERVICE]
-Objectif de conversion : [email signup / achat / demo request / téléchargement]
-Audience : [DESCRIPTION]
+[OBJECTIF]
+Valide la qualité de l'application {{NOM_PROJET}} avant mise en production,
+en couvrant fonctionnel, accessibilité, performance et déploiement.
 
-Sections :
-1. Hero — [accroche + CTA]
-2. Problème/Solution — [pain points + bénéfices]
-3. Fonctionnalités — [3-5 features avec icônes]
-4. Social proof — [testimonials / logos / stats]
-5. Pricing — [plans si applicable]
-6. FAQ — [objections courantes]
-7. CTA final
+[SKILLS À ACTIVER — dans cet ordre]
+1. `webapp-testing` → tests fonctionnels (scénarios utilisateur, mobile + desktop)
+2. `a11y-debugging` → audit WCAG AA (structure HTML, ARIA, contraste, clavier)
+3. `debug-optimize-lcp` → Core Web Vitals (LCP < 2.5s, CLS < 0.1, INP < 200ms)
+4. `memory-leak-debugging` → si l'app a une longue session ou état complexe
+5. `chrome-devtools` → inspection réseau, console, profiling si problème persistant
 
-Via Stitch : maquette desktop + mobile d'abord.
-Via brand : copy pour chaque section.
-Optimisation : SEO meta tags, Core Web Vitals, schema.org, Open Graph.
+[SÉQUENCE]
+a) Tests fonctionnels → rapport de bugs
+b) Corriger les bugs bloquants
+c) Audit accessibilité → rapport
+d) Corriger les issues de sévérité haute
+e) Audit performance → actions correctives
+f) Déploiement (résumé 5 lignes + validation avant lancement)
+
+[AVANT DÉPLOIEMENT]
+Résumer : commande de build · variables d'env · domaine · provider.
+Attendre validation explicite avant d'exécuter.
 ```
 
-### 📱 Application Fullstack
+**Sortie attendue** : `/docs/06-audit.md` + app déployée.
+
+---
+
+## 9. Le Prompt d'Entrée Unique (à coller dans Antigravity / Claude Code)
 
 ```
-[SKILL: planification] + [SKILL: modern-web-guidance] + [SKILL: managing-python-dependencies]
+Tu vas suivre le fichier AGENT-PROTOCOL.md présent à la racine du projet.
+Les skills disponibles sont dans `~/.gemini/config/skills/` (93 compétences).
 
-Application fullstack : [NOM]
-Fonctionnalité principale : [DESCRIPTION EN 1 PHRASE]
+1. Détermine {{TYPE_PROJET}} à partir de ma description ci-dessous.
+2. Consulte le Router de Projet (section 2) pour identifier les skills à mobiliser par phase.
+3. Exécute les phases dans l'ordre :
+   Phase 1 : Brainstorming → /docs/01-brief.md
+   Phase 2 : Plan          → /docs/02-plan.md
+   Phase 3 : Architecture  → /docs/03-architecture.md (si complexité le justifie)
+   Phase 4 : Design        → /docs/04-design.md + maquettes Stitch
+   Phase 5 : Construction  → code + /docs/05-changelog.md
+   Phase 6 : Tests/Deploy  → /docs/06-audit.md
+4. Avant chaque phase : pose jusqu'à 5 questions si des informations manquent,
+   puis attends ma validation avant de passer à la phase suivante.
+5. Ne relis pas un skill déjà chargé dans cette session.
+6. Si un skill du Router n'existe pas dans ~/.gemini/config/skills/, signale-le.
 
-Frontend : [Next.js 14 / React + Vite / Vue / autre]
-Backend : [Node.js Express / FastAPI / Next.js API Routes]
-Base de données : [PostgreSQL / MongoDB / SQLite / Supabase]
-Auth : [NextAuth / Supabase Auth / Auth0 / JWT custom]
-Hébergement : [Vercel + Railway / Fly.io / GCP / autre]
-
-Ordre de génération :
-1. Schéma de base de données + migrations
-2. API RESTful avec validation et tests
-3. Frontend avec gestion d'état (Zustand / Redux / Context)
-4. Authentification complète
-5. Déploiement et variables d'environnement
-
-Chaque étape : tests avant implémentation, commit après validation.
-```
-
-### 🤖 Automatisation de Service/Tâche/Processus
-
-```
-[SKILL: planification] + [SKILL: managing-python-dependencies]
-
-Je veux automatiser : [DESCRIPTION DE LA TÂCHE]
-Déclencheur : [manuel / cron / webhook / événement]
-Source de données : [API / fichier / base de données / scraping]
-Sortie : [email / fichier / base de données / Google Sheets / Slack]
-
-Générer execution/[nom-tache].py :
-- Connexion à la source (credentials depuis .env)
-- Logique de traitement
-- Gestion des erreurs avec retry
-- Logging structuré
-- Mode --dry-run
-- Notification de succès/échec
-
-Générer directives/[nom-tache].md (quoi/comment/cas limites).
-Tester immédiatement et montrer la sortie.
-```
-
-### 🎨 Design depuis Image (Design mon Code)
-
-```
-[SKILL: stitch] + [SKILL: frontend-design] + [SKILL: modern-web-guidance]
-
-J'ai une image de design que je veux transformer en code.
-[JOINDRE L'IMAGE]
-
-Analyser et identifier :
-1. Structure de layout (grid, flexbox, sections)
-2. Palette de couleurs exacte (HEX)
-3. Typographie (tailles, poids, familles)
-4. Composants réutilisables
-5. Interactions probables
-
-Générer :
-- Variables CSS du design system extrait
-- Composants React/HTML+CSS pixel-perfect
-- Layout responsive (breakpoint mobile 768px)
-- Animations/transitions si visibles
-
-Commencer par le composant le plus complexe.
+Description du projet : {{DESCRIPTION_IDEE}}
+Type pressenti : {{TYPE_PROJET}}
+(landing page / dashboard / SaaS / jeu / design-to-code / app fullstack /
+ boutique / site web / automatisation / agent IA / data pipeline)
 ```
 
 ---
 
-## CHECKLIST ANTI-GASPILLAGE DE TOKENS
+## 10. Checklist Finale (contrôle qualité & tokens)
 
-Avant d'envoyer un prompt, vérifier :
-
-- [ ] **Contexte minimal** : uniquement ce qui est nécessaire (pas de code entier sauf si demandé)
-- [ ] **Une phase à la fois** : brainstorming ET code dans le même message = gaspillage
-- [ ] **Skill déclaré** : mentionner `[SKILL: nom]` pour orienter l'agent
-- [ ] **Variables remplies** : tous les `[CROCHETS]` sont remplacés par de vraies valeurs
-- [ ] **Format de sortie précis** : spécifier Markdown / fichier / code / tableau
-- [ ] **Objectif unique** : chaque prompt = un livrable mesurable
-
----
-
-## ORDRE RECOMMANDÉ PAR PHASE
-
-```
-Phase 0 : Initialisation        → Prompt 0
-Phase 1 : Brainstorming         → 1A + 1B (+ 1C si maquettes rapides)
-Phase 2 : Planification         → 2A + 2B (+ 2C si présentation stakeholders)
-Phase 3 : Design                → 3A + 3B + 3D (+ 3C optionnel)
-Phase 4 : Développement         → 4A → 4B (répété par feature) → 4C si API → 4D si IA
-Phase 5 : Tests & Déploiement   → 5A + 5B + 5C + 5D
-```
-
-**Durée estimée par phase** (projet moyen) :
-| Phase | Durée | Livrable |
-|-------|-------|---------|
-| 0-1 Exploration | 15-30 min | Brief validé + maquettes |
-| 2 Planification | 30-60 min | Plan + architecture |
-| 3 Design | 30-45 min | Design system + assets |
-| 4 Développement | variable | Code fonctionnel par feature |
-| 5 Tests/Déploiement | 30-60 min | App validée + en ligne |
+- [ ] Chaque phase a produit un fichier `/docs/0X-*.md` court et daté
+- [ ] Aucun skill n'a été relu deux fois inutilement dans la session
+- [ ] L'architecture est proportionnée à la taille réelle du projet
+- [ ] Le design (`stitch` + `design-system`) a été validé **avant** le début du code
+- [ ] Chaque jalon de construction a été testé avant de passer au suivant
+- [ ] `/docs/decisions.md` reflète tous les choix figés (source de vérité unique)
+- [ ] `accidental-data-loss-prevention` activé avant toute opération destructive
+- [ ] Les métriques Core Web Vitals ont été vérifiées (`debug-optimize-lcp`)
+- [ ] L'accessibilité WCAG AA a été auditée (`a11y-debugging`)
 
 ---
 
-*Document v1.0 · 2026-07-20 · Maintenir à jour avec les nouvelles compétences.*
+## 11. Index Rapide — Skills par Phase
+
+| Phase | Skills essentiels | Skills optionnels |
+|-------|------------------|------------------|
+| **1 · Brainstorming** | `brainstorming` | `ui-ux-pro-max` `planification` |
+| **2 · Plan** | `planification` | `doc-coauthoring` `slides` |
+| **3 · Architecture** | `doc-coauthoring` | `managing-python-dependencies` `gcloud-auth-verification` |
+| **4 · Design** | `stitch` `design-system` `frontend-design` | `ui-ux-pro-max` `brand` `canvas-design` `banner-design` `theme-factory` `ui-styling` `algorithmic-art` |
+| **5 · Construction** | `modern-web-guidance` + skills spécifiques projet | `web-artifacts-builder` `claude-api` `mcp-builder` `google-antigravity-sdk` `managing-python-dependencies` `building-data-apps` `remotion-best-practices` |
+| **6 · Tests/Deploy** | `webapp-testing` `a11y-debugging` `debug-optimize-lcp` | `memory-leak-debugging` `chrome-devtools` `troubleshooting` |
+
+---
+
+*Protocole POSER v2.0 · 2026-07-20 · Compatible Antigravity (Gemini) & Claude Code*
+*Skills disponibles : 93 · Dossier : `~/.gemini/config/skills/`*
+*Dupliquer par projet et remplir les `{{VARIABLES}}`.*
