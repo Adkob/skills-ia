@@ -1,8 +1,8 @@
 # Modules de Design Internes (fallback sans dépendance externe)
 
-> À utiliser au Jalon D quand Claude Design / `stitch` / `design-system` ne sont pas disponibles, ou que le type de projet correspond exactement à l'un de ces modules. Socle commun aux modules 8.1/8.2 : overlay de bruit SVG (`feTurbulence` 0.05), rayons `rounded-[2rem]→[3rem]` partout, boutons magnétiques `scale(1.03)` + `cubic-bezier(0.25,0.46,0.45,0.94)`, liens `translateY(-1px)` au hover, animations `gsap.context()`+`ctx.revert()` (stagger 0.08 texte/0.15 cartes), stack React 19 + Tailwind 3.4 + GSAP3/ScrollTrigger + Lucide, vraies images Unsplash (jamais de placeholder gris). Directive commune : *"Construire un instrument digital, pas un site web — éradiquer tout pattern générique d'IA."*
+> À utiliser au Jalon D quand Claude Design / `stitch` / `design-system` ne sont pas disponibles, ou que le type de projet correspond exactement à l'un de ces modules. Socle commun aux modules 9.1/9.2 : overlay de bruit SVG (`feTurbulence` 0.05), rayons `rounded-[2rem]→[3rem]` partout, boutons magnétiques `scale(1.03)` + `cubic-bezier(0.25,0.46,0.45,0.94)`, liens `translateY(-1px)` au hover, animations `gsap.context()`+`ctx.revert()` (stagger 0.08 texte/0.15 cartes), stack React 19 + Tailwind 3.4 + GSAP3/ScrollTrigger + Lucide, vraies images Unsplash (jamais de placeholder gris). Directive commune : *"Construire un instrument digital, pas un site web — éradiquer tout pattern générique d'IA."*
 
-## 8.1 — `landing-cinematique`
+## 9.1 — `landing-cinematique`
 Flux : poser en un seul appel → (1) nom marque + objectif · (2) preset esthétique · (3) 3 arguments de vente · (4) CTA principal — puis construire sans discuter.
 
 | Preset | Palette (Primaire/Accent/Fond/Texte) | Typo (titres/dramatique/data) | Ambiance |
@@ -14,7 +14,7 @@ Flux : poser en un seul appel → (1) nom marque + objectif · (2) preset esthé
 
 Architecture figée (contenu/couleurs adaptables, structure non) : **Navbar** pilule flottante morphante (transparent→blur au scroll) · **Hero** 100dvh image+overlay, titre 2 parties (sans-gras + serif italique 3-5x) · **Fonctionnalités** 3 cartes-micro-interfaces (mélangeur diagnostique cyclique / machine à écrire télémétrie / planificateur curseur animé) · **Philosophie** 2 déclarations contrastées sur fond sombre + parallax · **Protocole** 3 cartes sticky empilées (ScrollTrigger pin) avec animation SVG unique chacune · **Tarification** 3 niveaux, carte du milieu mise en avant · **Footer** sombre `rounded-t-[4rem]` + statut "Système Opérationnel".
 
-## 8.2 — `cv-cinematique`
+## 9.2 — `cv-cinematique`
 Flux : (1) nom + titre pro · (2) preset esthétique · (3) parcours en 2-3 phrases · (4) 3 expériences + 5 compétences.
 
 | Preset | Palette | Typo | Ambiance |
@@ -26,7 +26,7 @@ Flux : (1) nom + titre pro · (2) preset esthétique · (3) parcours en 2-3 phra
 
 Architecture figée : **Navbar** signature flottante · **Hero** centré (photo cercle + nom massif + titre serif italique + 3 stats mono + 2 CTA) · **À propos** 2 colonnes séparées par ligne accent · **Expérience** timeline verticale alternée avec point pulsant · **Compétences** radar SVG animé / grille de maîtrise % animé / tags pondérés (choisir le plus adapté) · **Formation** cartes empilées fond sombre · **Contact** icônes+liens stagger + CTA "Télécharger CV" (`<a download>`, PDF placeholder à remplacer) · **Footer** minimaliste + indicateur "En ligne".
 
-## 8.3 — `saas-designer` (skill générale SaaS/dashboard)
+## 9.3 — `saas-designer` (skill générale SaaS/dashboard)
 ```yaml
 name: saas-designer
 description: Design premium, pixel-perfect SaaS interfaces (dashboards, landing,

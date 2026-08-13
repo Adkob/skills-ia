@@ -82,6 +82,7 @@ projet:
 │   ├── design-spec.md       ← Jalon D
 │   ├── changelog.md         ← Jalon E (par lot, si écart avec le plan)
 │   ├── decisions.md         ← source de vérité des choix figés
+│   ├── invariants.md        ← règles critiques niveau code (SaaS/Fullstack/paiement/auth), voir section 6 Jalon C
 │   └── audit.md             ← Jalon F (rapport de livraison)
 ├── directives/               ← SOP Markdown pour sous-tâches déterministes récurrentes
 │   └── <tache>.md
@@ -91,6 +92,8 @@ projet:
 ```
 
 **Livrables vs Intermédiaires** : un livrable est ce que l'utilisateur peut ouvrir/consulter (code applicatif du projet, Google Sheets/Slides, export). Un intermédiaire (dossier scrapé, cache, export temporaire) reste dans `.tmp/`.
+
+**`docs/invariants.md`** (SaaS/Fullstack/Dashboard avec paiement/auth/données sensibles) : liste vivante de règles techniques non négociables au niveau code — pas architecturales, concrètes et vérifiables dans le code lui-même (ex. *"le handler de webhook doit lire le raw body via `arrayBuffer()` AVANT tout parse JSON, sinon la vérification HMAC échoue silencieusement"*). Amorcé au Jalon C avec les invariants déjà connus, complété au Jalon E dès qu'une nouvelle règle de ce type est découverte (bug évité, contournement dangereux identifié). Consulté avant de toucher au code concerné, au même titre que `decisions.md` — c'est la mémoire des pièges déjà rencontrés, pas une redite de l'architecture.
 
 ---
 
@@ -118,7 +121,7 @@ projet:
 | `canvas-design` / `banner-design` | Visuels statiques, bannières réseaux sociaux |
 | `theme-factory` / `ui-styling` | Thème rapide cohérent / composants shadcn+Tailwind |
 | `algorithmic-art` | Art génératif p5.js |
-| Modules internes | `landing-cinematique`, `cv-cinematique`, `saas-designer` — voir `references/design-modules.md` |
+| Modules internes | `landing-cinematique`, `cv-cinematique`, `saas-designer` — voir `references/design-modules.md` (section 9) |
 
 ### 💻 Développement Web & Frontend
 | Skill | Usage |
@@ -138,7 +141,7 @@ projet:
 | `debug-optimize-lcp` | Core Web Vitals (LCP/CLS/INP) |
 | `memory-leak-debugging` | Fuites mémoire JS/Node |
 | `chrome-devtools` / `troubleshooting` | Débogage navigateur via DevTools MCP |
-| Module interne | `audit-securite-vibe-code` — voir `references/audit-securite.md` |
+| Module interne | `audit-securite-vibe-code` — voir `references/audit-securite.md` (section 7) |
 
 ### 📄 Documents & Data
 | Skill | Usage |
@@ -206,8 +209,8 @@ projet:
 [EXCLUSIONS] Pas de code ni de choix de stack. Ne pas inventer de contrainte non donnée.
 [ITÉRATION] ≤ 3 questions regroupées avant le brief final.
 ```
-**`docs/brief.md`** : Problème/cible/promesse · MVP · Parcours principal · Critères d'acceptation vérifiables · Hypothèses/risques · Hors périmètre · Décisions à valider.
-**Sortie** : parcours principal décrit sans ambiguïté sur les critères d'acceptation.
+**`docs/brief.md`** : Problème/cible/promesse · MVP · Parcours principal · Critères d'acceptation vérifiables (**format checklist `- [ ]`, un critère testable par ligne — jamais de prose narrative**, ex. `- [ ] un utilisateur non connecté est redirigé vers /login`) · Hypothèses/risques · Hors périmètre · Décisions à valider.
+**Sortie** : parcours principal décrit sans ambiguïté sur les critères d'acceptation. La checklist sert directement de base au Jalon F (chaque case cochée = testée).
 
 ### Jalon B — Plan d'Exécution
 **But** : décomposer en lots ordonnés, sans code. **Skills** : `planification` · `doc-coauthoring` · `slides` (si présentation)
@@ -230,10 +233,30 @@ projet:
 [EXCLUSIONS] Pas de composant non justifié. Justifier chaque choix en une phrase. Jamais de microservices pour une landing page.
 [ITÉRATION] Plusieurs stacks plausibles → tableau comparatif → attendre arbitrage.
 ```
-**`docs/architecture.md`** : Contexte/contraintes · Vue d'ensemble · Composants/responsabilités · Modèle de données/flux · Contrats (routes/événements) · Auth/secrets · Fiabilité (erreurs, idempotence, limites, observabilité) · Perf/a11y · Déploiement/rollback · ADR.
+**`docs/architecture.md`** : Contexte/contraintes · Vue d'ensemble · Composants/responsabilités · **Contrats** (modèle de données + routes/événements — voir gabarit ci-dessous) · **Fichiers protégés** (voir gabarit ci-dessous) · Auth/secrets · Fiabilité (erreurs, idempotence, limites, observabilité) · Perf/a11y · Déploiement/rollback (+ contraintes de la plateforme cible, ex. hébergement serverless : pas de WebSocket brut/worker long-running/`setInterval` persistant — provider managé compatible ou pattern outbox+cron) · ADR.
 
-Exigences par domaine : **Automatisation** → déclencheur, état, retries/backoff, idempotence, rate limits, logs, alertes, reprise (→ formaliser en `directives/` + `execution/`). **SaaS/Fullstack** → frontières client/API, rôles, multi-tenant si requis, migrations, validation serveur, quotas, audit. **Dashboard** → provenance, fraîcheur, granularité, filtres, agrégations, états vide/erreur, export. **Jeu** → boucle, états, contrôles, sauvegarde, perf mobile, écran de fin. **Storefront** → catalogue, panier, stocks, taxes/livraison, paiement via prestataire (**ne jamais implémenter le traitement de carte soi-même**), confirmation, conformité.
-**Sortie** : chaque composant a une responsabilité, chaque donnée critique un propriétaire, chaque défaillance prévisible une réponse.
+**Gabarit "Contrats" — obligatoire en YAML structuré pour SaaS/Fullstack/Dashboard/Storefront** (pas de prose narrative pour cette section : un bloc structuré se relit et se référence depuis n'importe quel lot du Jalon E sans réinterprétation, moins de tokens qu'un paragraphe équivalent, et empêche la dérive entre lots développés à des moments différents) :
+```yaml
+donnees:
+  <nom_table>:
+    colonnes: { <champ>: "<type> · <contrainte>" }
+    relations: ["<table liée> via <clé>"]
+routes:
+  - "<MÉTHODE> <chemin>"
+    payload: { <champ>: "<type>" }
+    reponse: { <champ>: "<type>" }
+    auth: "<public|utilisateur|role X>"
+```
+> Landing/CV/site vitrine sans backend propre : section "Contrats" omise, sans objection.
+
+**Gabarit "Fichiers protégés"** — à remplir dès qu'un fichier touche à l'auth, aux secrets, aux paiements, aux webhooks ou à un invariant de concurrence (locks, transactions) :
+```
+- <chemin/fichier> — <raison précise si modifié sans précaution : ex. "race condition sur le refresh token">
+```
+Règle : un fichier de cette liste ne se modifie jamais à la volée. Avant toute édition, résumer en une phrase *"Je vais modifier X parce que Y — confirmes-tu ?"* et attendre le feu vert, même si le lot en cours semble l'exiger.
+
+Exigences par domaine : **Automatisation** → déclencheur, état, retries/backoff, idempotence, rate limits, logs, alertes, reprise (→ formaliser en `directives/` + `execution/`). **SaaS/Fullstack** → frontières client/API, rôles, multi-tenant si requis, migrations, validation serveur, quotas, audit ; **chaque intégration tierce optionnelle (paiement, email, storage, analytics, OAuth) démarre inerte et sans erreur si ses variables d'env sont absentes** (réponse explicite 503/404 plutôt que crash au boot — permet de livrer le cœur du produit avant d'avoir tous les comptes fournisseurs). **Dashboard** → provenance, fraîcheur, granularité, filtres, agrégations, états vide/erreur, export. **Jeu** → boucle, états, contrôles, sauvegarde, perf mobile, écran de fin. **Storefront** → catalogue, panier, stocks, taxes/livraison, paiement via prestataire (**ne jamais implémenter le traitement de carte soi-même**), confirmation, conformité.
+**Sortie** : chaque composant a une responsabilité, chaque donnée critique un propriétaire, chaque défaillance prévisible une réponse. Sur SaaS/Fullstack/Dashboard/Storefront, le bloc "Contrats" est rempli avant tout code du Jalon E.
 
 ### Jalon D — Design & Expérience Utilisateur (Claude Design par défaut, avec repli confirmé)
 **But** : concevoir avant d'implémenter, au niveau adapté au produit.
@@ -293,14 +316,18 @@ Critères spécifiques : **Landing** → proposition de valeur sans scroll, CTA 
 [PERSONA] Développeur senior full-stack, livraisons par petites itérations testables.
 [OBJECTIF] Implémenter le lot {{NUMERO_LOT}} de docs/plan.md, selon architecture/design validés.
 [SÉQUENCE PAR TÂCHE]
-a) Relire le lot concerné + conventions du repo
+a) Relire le lot concerné + conventions du repo + bloc "Contrats" et "Fichiers protégés" de
+   docs/architecture.md + docs/invariants.md si SaaS/Fullstack/Dashboard/Storefront (jamais
+   improviser un champ/route hors contrat sans mettre à jour le contrat d'abord ; jamais toucher
+   un fichier protégé sans confirmation ; jamais réintroduire un piège déjà consigné dans invariants.md)
 b) Si sous-tâche déterministe récurrente → vérifier execution/ ; script existant ? le réutiliser ;
    sinon écrire le script + une directive courte dans directives/ (entrées/sorties/limites)
 c) Écrire le test qui échoue (TDD)
 d) Implémenter le chemin le plus court, interfaces simples
 e) Formatage, lint, tests ciblés → corriger les erreurs introduites
 f) Commit
-g) docs/changelog.md uniquement si la réalité diffère de la décision planifiée
+g) docs/changelog.md uniquement si la réalité diffère de la décision planifiée ; docs/invariants.md
+   si une règle critique niveau code vient d'être découverte
 [EXCLUSIONS] Ne pas toucher aux fichiers hors périmètre du lot. Ne pas réécrire architecture/design déjà validés.
 [AVANT ACTION DESTRUCTIVE] accidental-data-loss-prevention → résumé 5 lignes → feu vert explicite.
 ```
@@ -312,13 +339,18 @@ g) docs/changelog.md uniquement si la réalité diffère de la décision planifi
 ```
 [SÉQUENCE]
 a) Formatage/lint  b) Vérification types/build  c) Tests unitaires ciblés puis complets si coût raisonnable
-d) Test du parcours principal (E2E ou manuel)  e) Audit rapide : responsive, a11y, erreurs réseau, env vars
+d) Smoke test du parcours principal : script court et nommé (ex. pnpm smoke:auth) qui exécute le
+   chemin critique de bout en bout contre l'environnement réellement démarré (pas des mocks) —
+   E2E automatisé si l'outillage existe, sinon procédure manuelle scriptée et documentée dans
+   docs/audit.md. Distinct des tests unitaires : ceux-là valident des fonctions isolées, le smoke
+   test valide que le produit marche vraiment.
+e) Audit rapide : responsive, a11y, erreurs réseau, env vars
 f) Si SaaS/Fullstack/DB/Auth → module audit sécurité (references/audit-securite.md)
 g) Revue du diff Git (fichiers accidentels, changements hors périmètre)
 Pour une automatisation : essai contrôlé, prouver le résultat, tester au moins un échec/retry.
 [AVANT DÉPLOIEMENT] Présenter build command · variables d'env requises · migrations · rollback. Attendre autorisation explicite.
 ```
-**`docs/audit.md`** : Réalisé · Parcours vérifié · Fichiers/composants majeurs · Validations exécutées et résultat · Configuration requise (sans secrets) · Limites/risques restants · Prochaine action suggérée.
+**`docs/audit.md`** : Réalisé · Parcours vérifié · **Smoke test (commande utilisée + résultat)** · Fichiers/composants majeurs · Validations exécutées et résultat · Configuration requise (sans secrets) · Limites/risques restants · Prochaine action suggérée.
 
 ---
 
@@ -326,17 +358,33 @@ Pour une automatisation : essai contrôlé, prouver le résultat, tester au moin
 
 > Contenu complet : `references/audit-securite.md`. À invoquer au Jalon F pour tout projet SaaS/Fullstack/Automatisation manipulant secrets, DB ou auth. Résumé : lire toute la codebase, verdict individuel par item de checklist (✅/❌/⚠/⬚), format de conclusion imposé (sévérité, CWE, code vulnérable, correction, effort), rapport final avec posture globale et plan de remédiation priorisé.
 
-## 8. Modules de Design Internes
+## 8. Module — Suppression Propre d'une Fonctionnalité
 
-> Contenu complet : `references/design-modules.md`. Trois modules de repli/intrant pour Claude Design : `landing-cinematique` (§8.1), `cv-cinematique` (§8.2), `saas-designer` (§8.3) — à consulter au Jalon D quand le projet correspond exactement à l'un de ces types ou que Claude Design est indisponible.
+> À invoquer quand l'utilisateur demande de retirer une fonctionnalité déjà construite (intégration tierce, route, écran). Une suppression naïve (grep + delete) casse le build dès qu'une dépendance croisée existe.
 
-## 9. Annexe — Exemple Bout-en-Bout Multi-Agents
+**Séquence obligatoire, dans cet ordre** :
+1. **Recenser** : fichiers propres à la fonctionnalité (routes, libs, migrations, variables d'env) + toute dépendance croisée (import ailleurs dans le code, entrée cron, événement partagé, référence dans le bloc "Contrats" de `docs/architecture.md`).
+2. **Éditer avant de supprimer** : retirer d'abord les références dans les fichiers qui en dépendent (imports, cas d'un switch/dispatcher, entrées de configuration) — jamais l'inverse. Supprimer un fichier avant d'avoir traité ses dépendants casse le typecheck avant même d'avoir fini le recensement.
+3. **Supprimer** : les fichiers propres à la fonctionnalité et leurs tests associés.
+4. **Nettoyer** : `docs/architecture.md` (bloc "Contrats" + "Fichiers protégés" si concerné), `.env.example`, `README`, migration DB si le schéma est touché.
+5. **Valider (non négociable)** : lint + typecheck + tests + build. Si un gate est rouge → ne pas commit, corriger, revalider. Rollback avec `git checkout HEAD -- .` (restaure aussi les suppressions ; `git restore .` seul ne le fait pas).
+6. **Consigner** dans `docs/decisions.md` : ce qui a été retiré et pourquoi.
+
+**Avant de commencer** : présenter à l'utilisateur la liste des fichiers à supprimer + les dépendances croisées trouvées, attendre validation explicite — jamais de suppression silencieuse.
+
+> Sur un projet avec beaucoup d'intégrations optionnelles gated par variable d'env (cf. principe "inerte par défaut", Jalon C), un manifeste léger `docs/features.md` recensant chaque fonctionnalité optionnelle et ses dépendances croisées accélère l'étape 1 des suppressions futures — à créer seulement si le nombre d'intégrations optionnelles le justifie.
+
+## 9. Modules de Design Internes
+
+> Contenu complet : `references/design-modules.md`. Trois modules de repli/intrant pour Claude Design : `landing-cinematique` (§9.1), `cv-cinematique` (§9.2), `saas-designer` (§9.3) — à consulter au Jalon D quand le projet correspond exactement à l'un de ces types ou que Claude Design est indisponible.
+
+## 10. Annexe — Exemple Bout-en-Bout Multi-Agents
 
 > Contenu complet : `references/exemple-facturation.md`. Illustre l'enchaînement Jalons A→F d'un SaaS de facturation avec deux environnements (Claude pour la planification, Antigravity/Gemini pour la construction visuelle).
 
 ---
 
-## 10. Invocations Compactes (à coller dans une nouvelle session)
+## 11. Invocations Compactes (à coller dans une nouvelle session)
 
 **A. Démarrer/reprendre** :
 ```
@@ -355,7 +403,7 @@ Soumets-moi la fiche complétée pour validation, puis enchaîne directement sur
 **B. MVP de bout en bout** :
 ```
 Suis agent-protocol. Construis : [OBJECTIF] (type [TYPE], cible [CIBLE], contraintes [CONTRAINTES]).
-Découvre une fois les skills/modules pertinents (section 3 et 8). Jalons A→F avec gates :
+Découvre une fois les skills/modules pertinents (section 3 et 9). Jalons A→F avec gates :
 soumets brief+plan+architecture pour validation si décision irréversible ; sinon hypothèse réversible + avance.
 Au Jalon D : pose d'abord la question de confirmation Claude Design. Si Oui : produis
 docs/handoff-claude-design.md puis ARRÊTE-TOI — attends mon retour avant le Jalon E.
@@ -379,7 +427,7 @@ ajoute un test anti-régression. Conclusion : cause racine · correction · vali
 Suis agent-protocol, Jalon D. Le projet est de type landing-page/cv-portfolio.
 Pose d'abord la question de confirmation Claude Design.
 Si Oui : pose en un seul appel les 4 questions du module pertinent (references/design-modules.md
-§8.1 landing ou §8.2 CV), compile docs/handoff-claude-design.md avec preset+architecture figée
+§9.1 landing ou §9.2 CV), compile docs/handoff-claude-design.md avec preset+architecture figée
 comme intrants, puis ARRÊTE-TOI et attends le retour.
 Si Non : construis directement docs/design-spec.md avec le module comme base, sans t'arrêter.
 ```
@@ -388,7 +436,13 @@ Si Non : construis directement docs/design-spec.md avec le module comme base, sa
 Suis agent-protocol, references/audit-securite.md. Lis toute la codebase avant conclusion,
 verdict individuel par item de checklist, format de conclusion imposé, rapport final avec posture globale.
 ```
-**G. Entrée unique — projet complet** :
+**G. Suppression propre d'une fonctionnalité** :
+```
+Suis agent-protocol, module 8. Recense les fichiers propres à [FONCTIONNALITÉ] et leurs dépendances
+croisées, présente la liste et attends validation avant de commencer. Éditions avant suppressions,
+gate de validation non négociable (lint+typecheck+tests+build) avant tout commit.
+```
+**H. Entrée unique — projet complet** :
 ```
 Suis la compétence agent-protocol.
 1. Détermine {{TYPE_PROJET}}, remplis la fiche YAML (section 1).
@@ -404,7 +458,7 @@ Description : {{DESCRIPTION_IDEE}} | Type pressenti : {{TYPE_PROJET}}
 
 ---
 
-## 11. Règle de Décision Finale
+## 12. Règle de Décision Finale
 
 En cas de conflit entre objectifs :
 **Sécurité & exactitude > Instructions locales du dépôt > Maintenabilité > Vitesse > Embellissement**
@@ -412,7 +466,7 @@ En cas de conflit entre objectifs :
 
 ---
 
-## 12. Checklist Finale (contrôle qualité & tokens)
+## 13. Checklist Finale (contrôle qualité & tokens)
 
 - [ ] README + AGENTS.md + état Git lus avant toute action
 - [ ] Découverte des skills effectuée une seule fois — registre de session rempli
@@ -420,6 +474,11 @@ En cas de conflit entre objectifs :
 - [ ] `execution/` vérifié avant l'écriture de tout nouveau script déterministe
 - [ ] Chaque jalon a produit un fichier `docs/` court et daté
 - [ ] Architecture proportionnée à la taille réelle du projet
+- [ ] **SaaS/Fullstack/Dashboard/Storefront** : bloc "Contrats" (YAML, données+routes) rempli dans `docs/architecture.md` avant le Jalon E, jamais laissé en prose
+- [ ] **SaaS/Fullstack/Dashboard/Storefront** : bloc "Fichiers protégés" rempli dans `docs/architecture.md` ; aucun de ces fichiers modifié sans confirmation explicite préalable
+- [ ] **SaaS/Fullstack avec paiement/auth/données sensibles** : `docs/invariants.md` amorcé au Jalon C, complété au Jalon E à chaque piège découvert
+- [ ] **SaaS/Fullstack** : intégrations tierces optionnelles vérifiées inertes (503/404 explicite) quand leurs variables d'env sont absentes, pas de crash au boot
+- [ ] Critères d'acceptation de `docs/brief.md` rédigés en checklist `- [ ]` testable, pas en prose narrative
 - [ ] **Jalon D** : question de confirmation Claude Design posée systématiquement ; si Oui → `docs/handoff-claude-design.md` produit, session arrêtée, retour reçu et consigné dans `docs/design-spec.md` avant tout code ; si Non → `docs/design-spec.md` produit directement avec les skills internes
 - [ ] Chaque lot de construction testé avant le suivant
 - [ ] Qualité non négociable vérifiée à chaque lot (validation serveur, états UI, a11y, pas de secrets)
@@ -427,12 +486,14 @@ En cas de conflit entre objectifs :
 - [ ] `accidental-data-loss-prevention` activé avant toute opération destructive
 - [ ] Core Web Vitals vérifiés · Accessibilité WCAG AA auditée
 - [ ] Audit sécurité exécuté si SaaS/Fullstack/Auth/DB (`references/audit-securite.md`)
+- [ ] **Smoke test du parcours principal** exécuté et documenté dans `docs/audit.md` — pas seulement des tests unitaires
 - [ ] Rapport de livraison `docs/audit.md` produit
 - [ ] Aucun secret dans Git — `.env.example` documenté
+- [ ] Toute suppression de fonctionnalité a suivi le module 8 (jamais de delete naïf)
 
 ---
 
-## 13. Index Rapide — Skills/Modules par Jalon
+## 14. Index Rapide — Skills/Modules par Jalon
 
 | Jalon | Essentiels | Optionnels |
 |---|---|---|
@@ -441,8 +502,9 @@ En cas de conflit entre objectifs :
 | **C · Architecture** | `doc-coauthoring` | `managing-python-dependencies` skill DB dédié |
 | **D · Design** | **Claude Design** — voie par défaut, confirmée par question explicite | `saas-designer` `landing-cinematique` `cv-cinematique` `ui-ux-pro-max` `design-system` `frontend-design` `brand` `canvas-design` `stitch` — intrants si Oui, exécutés directement si Non |
 | **E · Construction** | `modern-web-guidance` + Router | `web-artifacts-builder` `claude-api` `mcp-builder` `google-antigravity-sdk` couche `directives/`+`execution/` |
-| **F · Tests/Deploy** | `webapp-testing` `a11y-debugging` `debug-optimize-lcp` | `memory-leak-debugging` `chrome-devtools` audit sécurité |
+| **F · Tests/Deploy** | `webapp-testing` `a11y-debugging` `debug-optimize-lcp` + smoke test nommé | `memory-leak-debugging` `chrome-devtools` audit sécurité |
+| **Suppression fonctionnalité** | module 8 (recenser → éditer → supprimer → nettoyer → valider → consigner) | `docs/features.md` si beaucoup d'intégrations optionnelles |
 
 ---
 
-*Protocole POSER v4.0 · fusion AGENTS.md (couches Directive/Orchestration/Exécution) + POSER v3 (jalons A→F) + modules izisaas (landing/CV cinématographiques, SaaS Designer, audit sécurité) · Compatible Claude Code & Antigravity (Gemini)*
+*Protocole POSER v4.2 · fusion AGENTS.md (couches Directive/Orchestration/Exécution) + POSER v3 (jalons A→F) + modules izisaas (landing/CV cinématographiques, SaaS Designer, audit sécurité) + contrats structurés/fichiers protégés Jalon C, invariants vivants, intégrations inertes par défaut, module suppression de fonctionnalité, smoke test nommé Jalon F (v4.2, inspiré d'un audit comparatif du starter kit izikit) · Compatible Claude Code & Antigravity (Gemini)*
